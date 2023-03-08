@@ -22,6 +22,7 @@ class Data(Base):
     humidity = Column(Numeric(4, 2))
     type = Column(String)
     time = Column(DateTime)
+    ts = Column(String)
 
 class Environment_Variables(Base):
     __tablename__ = "environment variables"
