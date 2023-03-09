@@ -12,14 +12,17 @@ function App() {
   const [mode, setMode] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [timestamp, setTimestamp] = useState(Date.now)
+  const [temphumcount, setTemphumcount] = useState(0)
 
   
   const start = async (time) =>{
       setIsLoading(true)
       try {
-        const response = await fetch('http://localhost:5000/start', {
+        console.log(time)
+        const response = await fetch('http://127.0.0.1:5000/start/', {
           method: "GET",  
           headers: {
+            "ts": time,
             "Content-Type": "application/json",
           },
         });
@@ -41,11 +44,12 @@ function App() {
 
   return (
     <div className="App" >
-      <div style={{"width": "93%", "height": "100%", "display": "flex", "flex-direction": "row"}}>
+      <div style={{"width": "17%", "height": "100%", "display": "flex", "flexDirection": "row"}}>
       <Container className="columnbg">
         <Row className='columnwrapper'>
           <Col className="column" onClick={() => {
             start(timestamp)
+            setTemphumcount(temphumcount+1)
             setMode("th")
             }}>
             Датчики влажности и температуры теплицы
@@ -61,18 +65,20 @@ function App() {
           </Col>
         </Row>
       </Container>
-      {mode === "th" ? <div>
-        <Temphum ts={timestamp}/>
-      </div> : null}
-      {mode === "h" ? <div>
+      </div>
+      <div style={{"width": "76%", "height": "100%"}}>
+      {mode === "th" ?
+        <Temphum ts={timestamp} md="chooseid" count = {temphumcount}/>
+       : null}
+      {mode === "h" ?
         <Hum/>
-      </div> : null}
-      {mode === "gh" ? <div>
+      : null}
+      {mode === "gh" ?
         <Gh/>
-      </div> : null}
-      {mode === "ghv" ? <div>
+       : null}
+      {mode === "ghv" ?
         <Ghv/>
-      </div> : null}
+       : null}
       </div>
       <div className='goddiv'>
       <Button variant="danger" className='godbtn'>God-Mode</Button>
