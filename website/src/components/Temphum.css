@@ -1,0 +1,31 @@
+.temphumcontainer{
+    width: fit-content !important;
+    height: fit-content !important;
+    background-color: #1dc1ee !important;
+    margin: 0% !important;
+    padding: 0.2% !important;
+}
+
+.temphumcolumnwrapper{
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.temphumcolumn{
+
+    padding: 10px !important;
+    cursor: pointer;
+    margin: 0px !important;
+    margin-bottom: 3px !important;
+    display: flex !important;
+    width: 100% !important;
+    background-color: #93e8ff !important;
+    justify-content: center !important;
+    border: 1px solid #000000;
+    
+}

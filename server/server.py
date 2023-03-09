@@ -24,6 +24,9 @@ class Data(Base):
     time = Column(DateTime)
     ts = Column(String)
 
+    def __repr__(self):
+        return f"Data(id={self.id}, temperature={self.temperature}, humidity={self.humidity}, type={self.type}, time={self.time}, ts={self.ts}, )"
+
 class Environment_Variables(Base):
     __tablename__ = "environment variables"
     id = Column(String, primary_key=True)
@@ -33,6 +36,7 @@ def setup():
     print("setup")
     engine = create_engine("postgresql+psycopg2://postgres:123@db:5432/", echo=True)
     engine.connect()
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with Session(engine, future=True) as s:
         to_add = []

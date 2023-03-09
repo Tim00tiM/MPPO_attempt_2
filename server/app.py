@@ -1,6 +1,6 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
-from sqlalchemy import create_engine, Column, String, Numeric, DateTime
+from sqlalchemy import create_engine, Column, String, Numeric, DateTime, select, and_
 from sqlalchemy.orm import declarative_base, Session
 import server
 import datetime
@@ -8,7 +8,10 @@ import requests as r
 import time
 import threading
 app = Flask(__name__)
-CORS(app)
+CORS_ALLOW_ORIGIN="*,*"
+CORS_EXPOSE_HEADERS="*,*"
+CORS_ALLOW_HEADERS="content-type,*"
+cors = CORS(app, origins=CORS_ALLOW_ORIGIN.split(","), allow_headers=CORS_ALLOW_HEADERS.split(",") , expose_headers= CORS_EXPOSE_HEADERS.split(","),   supports_credentials = True) 
 time.sleep(5)
 def temp_hum_sensor(number):
     URL = "https://dt.miet.ru/ppo_it/api/temp_hum/"
@@ -21,7 +24,6 @@ def hum_soil_sensor(number):
     return response.json()
 
 @app.route("/fork_drive/<mode>", methods=['GET'])
-@cross_origin(origins=["127.0.0.1:5000", "127.0.0.1:5173"])
 def fork_drive(mode):
     if mode == "close":
         mode_int = 0
@@ -37,7 +39,6 @@ def fork_drive(mode):
         return str(response.status_code)
 
 @app.route("/watering/<device_id>/<mode>", methods=['GET'])
-@cross_origin(origins=["127.0.0.1:5000", "127.0.0.1:5173"])
 def watering(device_id, mode):
     if mode == "close":
         mode_int = 0
@@ -54,7 +55,6 @@ def watering(device_id, mode):
         return str(response.status_code)
 
 @app.route("/total_watering/<mode>", methods=['GET'])
-@cross_origin(origins=["127.0.0.1:5000", "127.0.0.1:5173"])
 def total_watering(mode):
     if mode == "close":
         mode_int = 0
@@ -70,10 +70,9 @@ def total_watering(mode):
         return str(response.status_code)
     
 @app.route("/start/", methods=['GET'])
-@cross_origin(origins=["127.0.0.1:5000", "127.0.0.1:5173"])
 def start():
     global timestamp
-    timestamp = request.json
+    timestamp = request.headers.get("ts")
     print(timestamp)
     global flag
     if flag == 1:
@@ -83,11 +82,19 @@ def start():
         return Response(manual_run(), "db started to fill")
 
 @app.route("/stop/", methods=['GET'])
-@cross_origin(origins=["127.0.0.1:5000", "127.0.0.1:5173"])
 def stop():
     global flag
     flag = 0
     return "db stopped to fill"
+
+@app.route("/temp_hum_sensor_<id>/", methods=["GET"])
+def thsenget(id):
+    ts = request.headers.get("ts")
+    ret = {}
+    with Session(engine, future=True) as s:
+        for i in s.execute(select(server.Data).filter(and_(server.Data.type == ("temp_hum_sensor_"+str(id)), server.Data.ts == str(ts)))):
+            ret[str(i[0].time)] = {"hum": i[0].humidity, "tem": i[0].temperature}
+        return jsonify(ret)
 
 def update():
     global timestamp
