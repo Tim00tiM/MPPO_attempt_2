@@ -93,8 +93,8 @@ def thsenget(id):
     ret = {}
     with Session(engine, future=True) as s:
         for i in s.execute(select(server.Data).filter(and_(server.Data.type == ("temp_hum_sensor_"+str(id)), server.Data.ts == str(ts)))):
-            ret[str(i[0].time)] = {"hum": i[0].humidity, "tem": i[0].temperature}
-        return jsonify(ret)
+            ret[hash(str(i[0].time))] = {"hum": i[0].humidity, "tem": i[0].temperature, "time": i[0].time}
+        return ret
 
 def update():
     global timestamp
