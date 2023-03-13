@@ -1,0 +1,20 @@
+.ghtabletop{
+    overflow-y: scroll;
+    
+    max-height: 80vh;
+    width: 80%;
+}
+
+.ghtableitself{
+    margin: 0% !important;
+}
+
+Table thead{
+    position: sticky;
+    top: 0px;
+    margin: 0 0 0 0;
+}
+
+td, th{
+    text-align: center !important;
+}

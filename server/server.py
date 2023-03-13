@@ -51,4 +51,7 @@ def setup():
         s.add(Environment_Variables(id="H%", value=50))
         for i in range(1,7):
             s.add(Environment_Variables(id=("Hb%"+str(i)), value=50))
+            s.add(Environment_Variables(id=("Hbstate"+str(i)), value=0))
+        s.add(Environment_Variables(id=("Forkstate"), value=0))
+        s.add(Environment_Variables(id=("Hstate"), value=0))
         s.commit()
