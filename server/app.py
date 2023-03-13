@@ -1,6 +1,6 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
-from sqlalchemy import create_engine, Column, String, Numeric, DateTime, select, and_
+from sqlalchemy import create_engine, Column, String, Numeric, DateTime, select, and_, or_, update
 from sqlalchemy.orm import declarative_base, Session
 import server
 import datetime
@@ -34,7 +34,12 @@ def fork_drive(mode):
     response = r.patch(url = URL)
     print(response.json())
     if response.status_code == 200:
-        return "success"
+        with Session(engine, future=True) as s:
+            s.query(server.Environment_Variables)\
+            .filter(server.Environment_Variables.id == "Forkstate")\
+                .update({server.Environment_Variables.value: mode_int}, synchronize_session="auto")
+            s.commit()
+            return "success"
     else:
         return str(response.status_code)
 
@@ -50,7 +55,12 @@ def watering(device_id, mode):
     response = r.patch( url = URL)
     print(response.json())
     if response.status_code == 200:
-        return "success"
+        with Session(engine, future=True) as s:
+            s.query(server.Environment_Variables)\
+            .filter(server.Environment_Variables.id == "Hbstate"+str(device_id))\
+                .update({server.Environment_Variables.value: mode_int}, synchronize_session="auto")
+            s.commit()
+            return "success"
     else:
         return str(response.status_code)
 
@@ -65,7 +75,12 @@ def total_watering(mode):
     response = r.patch( url = URL)
     print(response.json())
     if response.status_code == 200:
-        return "success"
+        with Session(engine, future=True) as s:
+            s.query(server.Environment_Variables)\
+            .filter(server.Environment_Variables.id == "Hstate")\
+                .update({server.Environment_Variables.value: mode_int}, synchronize_session="auto")
+            s.commit()
+            return "success"
     else:
         return str(response.status_code)
     
@@ -95,6 +110,82 @@ def thsenget(id):
         for i in s.execute(select(server.Data).filter(and_(server.Data.type == ("temp_hum_sensor_"+str(id)), server.Data.ts == str(ts)))):
             ret[hash(str(i[0].time))] = {"hum": i[0].humidity, "tem": i[0].temperature, "time": i[0].time}
         return ret
+
+@app.route("/hum_sensor_<id>/", methods=["GET"])
+def hsenget(id):
+    ret = {}
+    with Session(engine, future=True) as s:
+        for i in s.execute(select(server.Data).filter(and_(server.Data.type == ("hum_soil_sensor_"+str(id))))):
+            ret[hash(str(i[0].time))] = {"hum": i[0].humidity, "tem": i[0].temperature, "time": i[0].time}
+        return ret
+
+@app.route("/gh/", methods=["GET"])
+def gh():
+    ret = {}
+    with Session(engine, future=True) as s:
+        for i in s.execute(select(server.Data).filter(or_(server.Data.type == ("temp_hum_sensor_1"), server.Data.type == ("temp_hum_sensor_2"), server.Data.type == ("temp_hum_sensor_3"), server.Data.type == ("temp_hum_sensor_4")))):
+            ret[hash(str(i[0].time))] = {"hum": i[0].humidity, "tem": i[0].temperature, "time": i[0].time}
+        return ret
+    
+@app.route("/getstates/", methods=["GET"])
+def getstates():
+    with Session(engine, future=True) as s:
+        ret = {}
+        for i in range(1,7):
+            ret[hash(s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == ("Hbstate" + str(i)))).first()[0].id)] = {"id": s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == ("Hbstate" + str(i)))).first()[0].id, "state": s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == ("Hbstate" + str(i)))).first()[0].value}
+        ret[hash(s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "Hstate")).first()[0].id)] = {"id": s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "Hstate")).first()[0].id, "state": s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "Hstate")).first()[0].value}
+        ret[hash(s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "Forkstate")).first()[0].id)] = {"id": s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "Forkstate")).first()[0].id, "state": s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "Forkstate")).first()[0].value}
+        return ret
+
+@app.route("/gethums/", methods=["GET"])
+def gethums():
+    with Session(engine, future=True) as s:
+        ret = {}
+        for i in range(1, 7):
+            ret[s.execute(select(server.Data).filter(server.Data.type.startswith("hum_soil_sensor_" + str(i))).order_by(server.Data.time.desc())).first()[0].type] = {"hum": s.execute(select(server.Data).filter(server.Data.type.startswith("hum_soil_sensor_" + str(i))).order_by(server.Data.time.desc())).first()[0].humidity}
+        return ret
+    
+@app.route("/getghavg/", methods=["GET"])
+def getghavg():
+    with Session(engine, future=True) as s:
+        ret = {}
+        for i in s.execute(select(server.Data).filter(server.Data.type.startswith("temp_hum")).order_by(server.Data.time.desc()).limit(4)).all():
+            ret[hash(datetime.datetime.now())] = {"tem": i[0].temperature, "hum": i[0].humidity}
+        return ret
+
+@app.route("/getvars/", methods=["GET"])
+def getvars():
+    with Session(engine, future=True) as s:
+        ret = {}
+        T = s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id.contains("\%"))).all()
+        for i in T:
+            ret[i[0].id] = i[0].value
+        T = s.execute(select(server.Environment_Variables).filter(server.Environment_Variables.id == "T")).first()
+        ret[T[0].id] = T[0].value
+        return ret
+
+@app.route("/update_var/<var>/<value>", methods=["GET"])
+def updatevar(var, value):
+    try:
+         q3123 = int(value)
+    except:
+        return "ti chmo"
+    with Session(engine, future=True) as s:
+        s.query(server.Environment_Variables)\
+        .filter(server.Environment_Variables.id == var)\
+        .update({server.Environment_Variables.value: int(value)}, synchronize_session="auto")
+        s.commit()
+        return "success"
+
+@app.route("/password/<passq>", methods=["GET"])
+def password(passq):
+    if passq=="НЧМЧ":
+        return Response({"state": "no"}, status=403)
+    if passq=="Karl":
+        return Response({"state": "no"}, status=402)
+    if passq=="Ar3n":
+        return {"state": "yes"}
+    return Response({"state": "no"}, status=401)
 
 def update():
     global timestamp
