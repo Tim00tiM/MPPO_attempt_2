@@ -1,6 +1,6 @@
 FROM python:alpine3.17
 
-WORKDIR web
+WORKDIR /web
 
 COPY requirements.txt requirements.txt
 RUN \
