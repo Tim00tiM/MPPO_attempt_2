@@ -1,5 +1,5 @@
 import Tablet from './Tablet'
-
+import Graph from './Graph'
 import { Container, Row, Col } from 'react-bootstrap'
 import { useState, useEffect } from 'react'
 import './Hum.css'
@@ -77,7 +77,7 @@ function Hum(props){
             :
             vistype === 
             "graph" ? 
-            "graph" :
+            <Graph type={"hum_sensor_" + hum} ts={props.ts}/> :
             vistype === "table" ? 
             <Tablet type={"hum_sensor_" + hum} ts={props.ts}/> :
             null
