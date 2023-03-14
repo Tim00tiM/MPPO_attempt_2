@@ -1,6 +1,6 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
-from sqlalchemy import create_engine, Column, String, Numeric, DateTime, select, and_, or_, update
+from sqlalchemy import create_engine, Column, String, Numeric, DateTime, select, and_, or_, update, insert
 from sqlalchemy.orm import declarative_base, Session
 import server
 import datetime
@@ -124,7 +124,7 @@ def gh():
     ret = {}
     with Session(engine, future=True) as s:
         for i in s.execute(select(server.Data).filter(or_(server.Data.type == ("temp_hum_sensor_1"), server.Data.type == ("temp_hum_sensor_2"), server.Data.type == ("temp_hum_sensor_3"), server.Data.type == ("temp_hum_sensor_4")))):
-            ret[hash(str(i[0].time))] = {"hum": i[0].humidity, "tem": i[0].temperature, "time": i[0].time}
+            ret[hash(str(i[0].id))] = {"hum": i[0].humidity, "tem": i[0].temperature, "time": i[0].time}
         return ret
     
 @app.route("/getstates/", methods=["GET"])
@@ -187,6 +187,26 @@ def password(passq):
         return {"state": "yes"}
     return Response({"state": "no"}, status=401)
 
+@app.route("/insert_var/<typeq>", methods=["GET"])
+def insert_var(typeq):
+    if typeq[0]=="h":
+        timeq = request.headers.get("time")
+        hum = request.headers.get("hum")
+        with Session(engine, future=True) as s:
+            s.add(server.Data(id=hash(datetime.datetime.now()), temperature=0, humidity=hum, type=("hum_soil_sensor_"+typeq[-1]), time = timeq, ts = 1))
+            s.commit()
+            return Response(status=200)
+    if typeq[0]=="t":
+        tsq = request.headers.get("ts")
+        timeq = request.headers.get("time")
+        hum = request.headers.get("hum")
+        tem = request.headers.get("tem")
+        with Session(engine, future=True) as s:
+            for i in range(4):
+                s.add(server.Data(id=hash(datetime.datetime.now()), temperature=tem, humidity=hum, type=("temp_hum_sensor_"+str(i+1)), time = timeq, ts = tsq))
+            s.commit()
+            return Response(status=200)
+
 def update():
     global timestamp
     while flag == 1:
@@ -202,7 +222,9 @@ def update():
                 s.add_all(to_add)
                 s.commit()
             
-        
+
+
+
 def manual_run():
     t = threading.Thread(target = update)
     t.start()

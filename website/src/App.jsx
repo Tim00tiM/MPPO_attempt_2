@@ -104,7 +104,7 @@ function App(props) {
         <Hum md="chooseid" count = {temphumcount}/>
       : null}
       {mode === "gh" ?
-        <Gh md="choosevistype" count = {temphumcount}/>
+        <Gh md="choosevistype" count = {temphumcount} ts = {timestamp}/>
        : null}
       {mode === "ghv" ?
         <Ghv admin={admin}/>

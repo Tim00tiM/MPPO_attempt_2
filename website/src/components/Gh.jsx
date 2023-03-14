@@ -1,4 +1,5 @@
 import './Gh.css'
+import GhGraph from './GhGraph'
 import GhTablet from './GhTablet'
 import { Container, Row, Col } from 'react-bootstrap'
 import { useState, useEffect } from 'react'
@@ -37,9 +38,9 @@ function Gh(props){
             :
             vistype === 
             "graph" ? 
-            "graph" :
+             <GhGraph /> :
             vistype === "table" ? 
-            <GhTablet/> :
+            <GhTablet ts = {props.ts}/> :
             null
             }
             

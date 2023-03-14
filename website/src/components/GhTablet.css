@@ -18,3 +18,8 @@ Table thead{
 td, th{
     text-align: center !important;
 }
+
+.adder{
+    margin-top: 1%;
+    margin-left: 1%;
+}

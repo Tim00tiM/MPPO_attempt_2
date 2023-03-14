@@ -1,5 +1,5 @@
 import Tablet from './Tablet'
-
+import Graph from './Graph'
 import { Container, Row, Col } from 'react-bootstrap'
 import { useState, useEffect } from 'react'
 import './Temphum.css'
@@ -65,7 +65,7 @@ function Temphum(props){
             :
             vistype === 
             "graph" ? 
-            "graph" :
+            <Graph type={"temp_hum_sensor_" + temphum} ts={props.ts}/> :
             vistype === "table" ? 
             <Tablet type={"temp_hum_sensor_" + temphum} ts={props.ts}/> :
             null
